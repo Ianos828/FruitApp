@@ -21,8 +21,20 @@ data class Measurement(
     val mq4Reading: Int,
     val mq5Reading: Int
 ) {
+
+    //TODO: fix override method to something nicer
     override fun toString(): String {
-        return "Fluorescence: %s\nForce Sensor Reading: %s\nNIR Readings: %s\nLidar Reading: %s\nEthylene Concetration: %s\nAir Quality: %s\nMQ3 Reading: %s\nMQ4 Reading: %s\nMQ5 Reading: %s"
+        return String.format("Fluorescence: %s\nForce Sensor Reading: %s\nNIR Readings: %s\nLidar Reading: %s\nEthylene Concentration: %s\nAir Quality: %s\nMQ3 Reading: %s\nMQ4 Reading: %s\nMQ5 Reading: %s",
+            fluorescenceReading,
+            forceSensorReading,
+            nirReadings,
+            lidarReading,
+            ethyleneConcentration,
+            airQuality,
+            mq3Reading,
+            mq4Reading,
+            mq5Reading
+            )
     }
 }
 
