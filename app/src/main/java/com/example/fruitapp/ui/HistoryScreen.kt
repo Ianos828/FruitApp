@@ -104,6 +104,8 @@ private fun MeasurementItem(
                         bottom = dimensionResource(R.dimen.padding_medium)
                     )
                 )
+
+                //TODO: add a way to delete the measurement entry from the list
             }
         }
 

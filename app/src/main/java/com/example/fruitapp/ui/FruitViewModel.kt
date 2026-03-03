@@ -9,3 +9,5 @@ import kotlinx.coroutines.flow.asStateFlow
 //    private val _uiState = MutableStateFlow(OrderUiState())
 //    val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
 //}
+
+//TODO: verify that viewmodel is not needed in the project

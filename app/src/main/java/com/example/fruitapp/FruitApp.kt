@@ -142,6 +142,8 @@ private fun FruitAppAppBar(
                 }
             }
         },
+
+        //TODO: see if it is possible to add a help button to the app bar
         modifier = modifier
     )
 }
