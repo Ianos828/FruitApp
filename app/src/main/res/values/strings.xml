@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FruitApp</string>
+    <string name="take_measurement">Take Measurement</string>
+    <string name="see_history">View Past Measurements</string>
+</resources>
