@@ -1,55 +1,82 @@
 package com.example.fruitapp.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.fruitapp.R
-import com.example.fruitapp.data.Measurement
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlin.random.Random
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.fruitapp.FruitAppApplication
+import com.example.fruitapp.data.Esp32MeasurementsRepository
+import com.example.fruitapp.data.ReganMeasurementsRepository
+import com.example.fruitapp.model.Measurement
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 /**
  * View Model for the Fruit App
  */
-class FruitViewModel: ViewModel() {
-    private val _uiState = MutableStateFlow(FruitUiState())
-    val uiState: StateFlow<FruitUiState> = _uiState.asStateFlow()
+class FruitViewModel (
+    private val esp32MeasurementsRepository: Esp32MeasurementsRepository,
+    private val reganMeasurementsRepository: ReganMeasurementsRepository
+): ViewModel() {
 
-    /**
-     * Generates a new measurement with dummy data. For testing purposes only
-     *
-     * This will be replaced by real data from the ESP32 via WiFi transmission or the like
-     */
-    fun generateRandomMeasurement() {
-        val measurement = Measurement(
-                R.drawable.banana,
-                Random.nextFloat(),
-                Random.nextFloat(),
-                Random.nextInt().toString(),
-                Random.nextInt().toString(),
-                listOf(Random.nextFloat(), Random.nextFloat(), Random.nextFloat()),
-                Random.nextFloat(),
-                Random.nextInt(),
-                Random.nextInt(),
-                Random.nextInt(),
-                Random.nextInt(),
-                Random.nextInt()
-        )
+    var fruitUiState: FruitUiState by mutableStateOf(FruitUiState.Loading)
+        private set
 
-        _uiState.update { currentState ->
-            currentState.copy(measurement = measurement)
+    init {
+        getMeasurement()
+    }
+
+    fun getMeasurement() {
+        viewModelScope.launch {
+            val currentMeasurements = (fruitUiState as? FruitUiState.Success)?.measurements ?: listOf()
+            fruitUiState = FruitUiState.Loading
+            try {
+                val measurement = Measurement(
+                    esp32MeasurementsRepository.getMeasurements(),
+                    reganMeasurementsRepository.getMeasurements(),
+                    currentMeasurements.size + 1
+                )
+                fruitUiState = FruitUiState.Success(
+                    measurement = measurement,
+                    measurements = currentMeasurements
+                )
+            } catch (e: IOException) {
+                fruitUiState = FruitUiState.Error
+            } catch (e: HttpException) {
+                fruitUiState = FruitUiState.Error
+            }
         }
     }
 
     /**
-     * Adds the current new measurement to the list of measurements
+     * Saves the current measurement to the history list.
      */
-    fun addMeasurement(measurement: Measurement) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                measurements = currentState.measurements + measurement
+    fun saveCurrentMeasurement() {
+        val currentState = fruitUiState
+        if (currentState is FruitUiState.Success) {
+            fruitUiState = currentState.copy(
+                measurements = currentState.measurements + currentState.measurement
             )
+        }
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[APPLICATION_KEY] as FruitAppApplication)
+                val esp32MeasurementsRepository = application.container.esp32MeasurementsRepository
+                val reganMeasurementsRepository = application.container.reganMeasurementsRepository
+                FruitViewModel(
+                    esp32MeasurementsRepository = esp32MeasurementsRepository,
+                    reganMeasurementsRepository = reganMeasurementsRepository
+                )
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -16,11 +17,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.fruitapp.ErrorScreen
+import com.example.fruitapp.LoadingScreen
 import com.example.fruitapp.R
-import com.example.fruitapp.data.Measurement
+import com.example.fruitapp.model.Esp32Measurement
+import com.example.fruitapp.model.Measurement
 
 /**
  * The screen that displays the measurement information after taking a measurement
@@ -30,8 +40,31 @@ fun MeasurementScreen(
     fruitUiState: FruitUiState,
     onSaveMeasurementButtonClicked: () -> Unit,
     onDiscardMeasurementButtonClicked: () -> Unit,
+    retryAction: () -> Unit,
     modifier: Modifier = Modifier
-){
+) {
+    when (fruitUiState) {
+        is FruitUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
+        is FruitUiState.Success -> MeasurementDetailsScreen(
+            measurement = fruitUiState.measurement,
+            onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
+            onDiscardMeasurementButtonClicked = onDiscardMeasurementButtonClicked,
+            modifier = modifier.fillMaxWidth()
+        )
+        is FruitUiState.Error -> ErrorScreen(
+            retryAction,
+            modifier = modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+fun MeasurementDetailsScreen(
+    measurement: Measurement,
+    onSaveMeasurementButtonClicked: () -> Unit,
+    onDiscardMeasurementButtonClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier
     ) {
@@ -40,8 +73,8 @@ fun MeasurementScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            FruitImage(fruitUiState.measurement.fruitImageResourceId)
-            FruitDetails(fruitUiState.measurement)
+            FruitImage(measurement.reganMeasurement.imageSource)
+            FruitDetails(measurement)
 
             ButtonColumn(
                 onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
@@ -56,13 +89,20 @@ fun MeasurementScreen(
  */
 @Composable
 private fun FruitImage(
-    @DrawableRes imageResourceId: Int,
+    imageSource: String,
     modifier: Modifier = Modifier
 ){
-    Image(
-        painter = painterResource(imageResourceId),
+    AsyncImage(
+        model = ImageRequest.Builder(context = LocalContext.current).data(imageSource)
+            .crossfade(true).build(),
+        error = painterResource(R.drawable.ic_broken_image),
+        placeholder = painterResource(R.drawable.loading_img),
         contentDescription = null,
-        modifier = Modifier.width(dimensionResource(R.dimen.medium_image_size))
+        contentScale = ContentScale.Crop,
+        modifier = modifier
+            .size(dimensionResource(R.dimen.medium_image_size))
+            .padding(dimensionResource(R.dimen.padding_small))
+            .clip(MaterialTheme.shapes.small)
     )
 }
 

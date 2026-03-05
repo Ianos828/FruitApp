@@ -7,5 +7,8 @@
     <string name="history">View Past Measurements</string>
     <string name="back_button">Back</string>
     <string name="expand_button_content_description">See more or less information about a measurement.</string>
-    <string name="measurement_desc">Reading on %s</string>
+    <string name="measurement_desc">Measurement %d</string>
+    <string name="loading_failed">Failed to load</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading</string>
 </resources>

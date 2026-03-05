@@ -1,16 +1,13 @@
 package com.example.fruitapp.ui
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,11 +31,15 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.example.fruitapp.R
-import com.example.fruitapp.data.Measurement
-import java.time.LocalDateTime
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.fruitapp.ErrorScreen
+import com.example.fruitapp.LoadingScreen
+import com.example.fruitapp.model.Measurement
 
 /**
  * History screen of the app
@@ -46,16 +47,31 @@ import androidx.compose.foundation.lazy.items
 @Composable
 fun HistoryScreen(
     fruitUiState: FruitUiState,
+    retryAction: () -> Unit,
     innerPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        //contentPadding = innerPadding
-    ) {
-        items(fruitUiState.measurements) {
-            MeasurementItem(
-                measurement = it,
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+    when (fruitUiState) {
+        is FruitUiState.Success -> {
+            LazyColumn(
+                modifier = modifier,
+                //contentPadding = innerPadding
+            ) {
+                items(items = fruitUiState.measurements) { measurement ->
+                    MeasurementItem(
+                        measurement = measurement,
+                        modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+                    )
+                }
+            }
+        }
+        is FruitUiState.Loading -> {
+            LoadingScreen(modifier = modifier.fillMaxSize())
+        }
+        is FruitUiState.Error -> {
+            ErrorScreen(
+                retryAction,
+                modifier = modifier.fillMaxSize()
             )
         }
     }
@@ -91,9 +107,11 @@ private fun MeasurementItem(
                     .fillMaxWidth()
                     .padding(dimensionResource(id = R.dimen.padding_small))
             ) {
-                FruitImage(measurement.fruitImageResourceId)
-                FruitInformation(measurement.date, measurement.time, modifier = Modifier.weight(1f))
-                //Spacer(modifier = Modifier.weight(1f))
+                FruitImage(measurement.reganMeasurement.imageSource)
+                FruitInformation(
+                    id = measurement.id,
+                    modifier = Modifier.weight(1f)
+                )
                 FruitDetailsButton(
                     expanded = expanded,
                     onClick = { expanded = !expanded }
@@ -102,7 +120,7 @@ private fun MeasurementItem(
 
             if (expanded) {
                 Text(
-                    text = measurement.toString(),
+                    text = measurement.esp32Measurement.toString(),
                     modifier = Modifier.padding(
                         start = dimensionResource(R.dimen.padding_medium),
                         top = dimensionResource(R.dimen.padding_small),
@@ -110,58 +128,48 @@ private fun MeasurementItem(
                         bottom = dimensionResource(R.dimen.padding_medium)
                     )
                 )
-
-                //TODO: add a way to delete the measurement entry from the list
             }
         }
-
     }
 }
 
-/**
- * The fruit image displayed on the screen
- */
 @Composable
 private fun FruitImage(
-    @DrawableRes fruitImageResourceId: Int,
+    imageSource: String,
     modifier: Modifier = Modifier
 ) {
-    Image(
+    AsyncImage(
+        model = ImageRequest.Builder(context = LocalContext.current).data(imageSource)
+            .crossfade(true).build(),
+        error = painterResource(R.drawable.ic_broken_image),
+        placeholder = painterResource(R.drawable.loading_img),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
         modifier = modifier
             .size(dimensionResource(R.dimen.small_image_size))
             .padding(dimensionResource(R.dimen.padding_small))
-            .clip(MaterialTheme.shapes.small),
-        contentScale = ContentScale.Crop,
-        painter = painterResource(fruitImageResourceId),
-        contentDescription = null
+            .clip(MaterialTheme.shapes.small)
     )
 }
 
-/**
- * The measurement information displayed on the screen without expanding the dropdown
- */
 @Composable
 private fun FruitInformation(
-    date: String,
-    time: String,
+    id: Int,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.measurement_desc, date),
+            text = stringResource(R.string.measurement_desc, id),
             style = MaterialTheme.typography.displayMedium,
             modifier = Modifier.padding(top = dimensionResource(id = R.dimen.padding_small))
         )
         Text(
-            text = time,
+            text = "placeholder",
             style = MaterialTheme.typography.bodyLarge
         )
     }
 }
 
-/**
- * The details button that expands the dropdown
- */
 @Composable
 private fun FruitDetailsButton(
     expanded: Boolean,

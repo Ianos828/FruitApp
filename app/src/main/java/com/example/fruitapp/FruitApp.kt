@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,9 +50,6 @@ enum class FruitAppScreen(@StringRes val title: Int) {
     History(title = R.string.history)
 }
 
-/**
- * The main app UI.
- */
 @Composable
 fun FruitApp(
     navController: NavHostController = rememberNavController()
@@ -63,8 +59,8 @@ fun FruitApp(
         backStackEntry?.destination?.route ?: FruitAppScreen.Start.name
     )
 
-    // Create ViewModel
-    val viewModel: FruitViewModel = viewModel()
+    // Create ViewModel using the Factory
+    val viewModel: FruitViewModel = viewModel(factory = FruitViewModel.Factory)
 
     Scaffold(
         topBar = {
@@ -86,8 +82,6 @@ fun FruitApp(
         }
     ) { innerPadding ->
 
-        val fruitUiState by viewModel.uiState.collectAsState()
-
         NavHost(
             navController = navController,
             startDestination = FruitAppScreen.Start.name,
@@ -96,7 +90,7 @@ fun FruitApp(
             composable(route = FruitAppScreen.Start.name) {
                 FruitAppHomeScreen (
                     onMeasureButtonClicked = {
-                        viewModel.generateRandomMeasurement()
+                        viewModel.getMeasurement()
                         navController.navigate(FruitAppScreen.Measurement.name)
                     },
                     onHistoryButtonClicked = { navController.navigate(FruitAppScreen.History.name) },
@@ -106,9 +100,9 @@ fun FruitApp(
             }
             composable(route = FruitAppScreen.Measurement.name) {
                 MeasurementScreen(
-                    fruitUiState = fruitUiState,
+                    fruitUiState = viewModel.fruitUiState,
                     onSaveMeasurementButtonClicked = {
-                        viewModel.addMeasurement(fruitUiState.measurement)
+                        viewModel.saveCurrentMeasurement()
                         navController.navigate(FruitAppScreen.History.name) {
                             popUpTo(FruitAppScreen.Start.name) {
                                 inclusive = false
@@ -116,32 +110,30 @@ fun FruitApp(
                         }
                     },
                     onDiscardMeasurementButtonClicked = {
-                        //viewModel.discardMeasurement()
+                        // Just navigate back to Start without saving
                         navController.navigate(FruitAppScreen.Start.name) {
                             popUpTo(FruitAppScreen.Start.name) {
                                 inclusive = true
                             }
                         }
                     },
+                    retryAction = viewModel::getMeasurement,
                     modifier = Modifier.padding(innerPadding)
                         .fillMaxSize()
                 )
             }
             composable(route = FruitAppScreen.History.name) {
                 HistoryScreen(
-                    fruitUiState = fruitUiState,
+                    fruitUiState = viewModel.fruitUiState,
                     innerPadding = innerPadding,
-                    modifier = Modifier.padding(innerPadding)
-                        .fillMaxSize()
+                    retryAction = viewModel::getMeasurement,
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
     }
 }
 
-/**
- * The top app bar that persists across screens
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FruitAppAppBar(
@@ -177,7 +169,7 @@ private fun FruitAppAppBar(
             }
         },
 
-        //TODO: see if it is possible to add a help button to the app bar
+        //TODO: Add delete button
         modifier = modifier
     )
 }
