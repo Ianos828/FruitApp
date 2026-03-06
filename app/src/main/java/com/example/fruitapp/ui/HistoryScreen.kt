@@ -120,7 +120,7 @@ private fun MeasurementItem(
 
             if (expanded) {
                 Text(
-                    text = measurement.esp32Measurement.toString(),
+                    text = measurement.toString(),
                     modifier = Modifier.padding(
                         start = dimensionResource(R.dimen.padding_medium),
                         top = dimensionResource(R.dimen.padding_small),

@@ -9,6 +9,6 @@ data class Measurement(
      * Returns a string representation of the measurement
      */
     override fun toString(): String {
-        return "$esp32Measurement + $reganMeasurement"
+        return "$esp32Measurement\n$reganMeasurement"
     }
 }
