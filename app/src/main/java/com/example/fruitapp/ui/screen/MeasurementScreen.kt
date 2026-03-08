@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.fruitapp.R
+import com.example.fruitapp.model.Image
 import com.example.fruitapp.model.Measurement
 import com.example.fruitapp.ui.FruitUiState
 
@@ -68,7 +69,8 @@ fun MeasurementDetailsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            MediumFruitImage(measurement.reganMeasurement.imageSource)
+            // Updated to pass the image from measurement
+            MediumFruitImage(measurement.image)
             FruitDetails(measurement)
 
             ButtonColumn(
@@ -80,16 +82,18 @@ fun MeasurementDetailsScreen(
 }
 
 /**
- * The fruit image displayed on the screen
+ * The fruit image displayed on the screen using the Bitmap from Image
  */
 @Composable
 private fun MediumFruitImage(
-    imageSource: String,
+    image: Image,
     modifier: Modifier = Modifier
 ){
     AsyncImage(
-        model = ImageRequest.Builder(context = LocalContext.current).data(imageSource)
-            .crossfade(true).build(),
+        model = ImageRequest.Builder(context = LocalContext.current)
+            .data(image.bitmap)
+            .crossfade(true)
+            .build(),
         error = painterResource(R.drawable.ic_broken_image),
         placeholder = painterResource(R.drawable.loading_img),
         contentDescription = null,

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.fruitapp.FruitAppApplication
+import com.example.fruitapp.data.Esp32CamRepository
 import com.example.fruitapp.data.Esp32MeasurementsRepository
 import com.example.fruitapp.data.ReganMeasurementsRepository
 import com.example.fruitapp.model.Measurement
@@ -22,7 +23,8 @@ import java.io.IOException
  */
 class FruitViewModel (
     private val esp32MeasurementsRepository: Esp32MeasurementsRepository,
-    private val reganMeasurementsRepository: ReganMeasurementsRepository
+    private val reganMeasurementsRepository: ReganMeasurementsRepository,
+    private val esp32CamRepository: Esp32CamRepository
 ): ViewModel() {
 
     var fruitUiState: FruitUiState by mutableStateOf(FruitUiState.Loading)
@@ -40,6 +42,7 @@ class FruitViewModel (
                 val measurement = Measurement(
                     esp32MeasurementsRepository.getMeasurements(),
                     reganMeasurementsRepository.getMeasurements(),
+                    esp32CamRepository.getImage(),
                     currentMeasurements.size + 1
                 )
                 fruitUiState = FruitUiState.Success(
@@ -72,9 +75,11 @@ class FruitViewModel (
                 val application = (this[APPLICATION_KEY] as FruitAppApplication)
                 val esp32MeasurementsRepository = application.container.esp32MeasurementsRepository
                 val reganMeasurementsRepository = application.container.reganMeasurementsRepository
+                val esp32CamRepository = application.container.esp32CamRepository
                 FruitViewModel(
                     esp32MeasurementsRepository = esp32MeasurementsRepository,
-                    reganMeasurementsRepository = reganMeasurementsRepository
+                    reganMeasurementsRepository = reganMeasurementsRepository,
+                    esp32CamRepository = esp32CamRepository
                 )
             }
         }

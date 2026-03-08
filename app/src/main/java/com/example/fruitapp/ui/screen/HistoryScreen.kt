@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.fruitapp.model.Image
 import com.example.fruitapp.model.Measurement
 import com.example.fruitapp.ui.FruitUiState
 
@@ -106,7 +107,7 @@ private fun MeasurementItem(
                     .fillMaxWidth()
                     .padding(dimensionResource(id = R.dimen.padding_small))
             ) {
-                SmallFruitImage(measurement.reganMeasurement.imageSource)
+                SmallFruitImage(measurement.image)
                 FruitInformation(
                     id = measurement.id,
                     modifier = Modifier.weight(1f)
@@ -134,11 +135,11 @@ private fun MeasurementItem(
 
 @Composable
 private fun SmallFruitImage(
-    imageSource: String,
+    image: Image,
     modifier: Modifier = Modifier
 ) {
     AsyncImage(
-        model = ImageRequest.Builder(context = LocalContext.current).data(imageSource)
+        model = ImageRequest.Builder(context = LocalContext.current).data(image)
             .crossfade(true).build(),
         error = painterResource(R.drawable.ic_broken_image),
         placeholder = painterResource(R.drawable.loading_img),

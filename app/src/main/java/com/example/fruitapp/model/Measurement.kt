@@ -3,6 +3,7 @@ package com.example.fruitapp.model
 data class Measurement(
     val esp32Measurement: Esp32Measurement,
     val reganMeasurement: ReganMeasurement,
+    val image: Image,
     val id: Int
 ) {
     /**

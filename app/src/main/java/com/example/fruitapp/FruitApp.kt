@@ -117,7 +117,7 @@ fun FruitApp(
                             }
                         }
                     },
-                    retryAction = viewModel::getMeasurement,
+                    retryAction = { viewModel.getMeasurement() },
                     modifier = Modifier.padding(innerPadding)
                         .fillMaxSize()
                 )
@@ -126,7 +126,7 @@ fun FruitApp(
                 HistoryScreen(
                     fruitUiState = viewModel.fruitUiState,
                     innerPadding = innerPadding,
-                    retryAction = viewModel::getMeasurement,
+                    retryAction = { viewModel.getMeasurement() },
                     modifier = Modifier.fillMaxSize()
                 )
             }
