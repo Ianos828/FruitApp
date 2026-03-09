@@ -22,6 +22,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +54,7 @@ enum class FruitAppScreen(@StringRes val title: Int) {
     History(title = R.string.history)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FruitApp(
     navController: NavHostController = rememberNavController()
@@ -66,6 +69,8 @@ fun FruitApp(
 
     val coroutineScope = rememberCoroutineScope()
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     Scaffold(
         topBar = {
             val layoutDirection = LocalLayoutDirection.current
@@ -73,6 +78,7 @@ fun FruitApp(
                 currentScreen = currentScreen,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navigateUp = { navController.navigateUp() },
+                scrollBehavior = scrollBehavior,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -142,6 +148,7 @@ fun FruitApp(
 @Composable
 private fun FruitAppAppBar(
     currentScreen: FruitAppScreen,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     canNavigateBack: Boolean,
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier
@@ -172,8 +179,7 @@ private fun FruitAppAppBar(
                 }
             }
         },
-
-        //TODO: Add delete button
+        scrollBehavior = scrollBehavior,
         modifier = modifier
     )
 }
