@@ -15,13 +15,10 @@ import com.example.fruitapp.data.Esp32MeasurementsRepository
 import com.example.fruitapp.data.MeasurementsRepository
 import com.example.fruitapp.data.ReganMeasurementsRepository
 import com.example.fruitapp.model.Measurement
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
+import java.time.LocalDateTime
 
 /**
  * View Model for the Fruit App
@@ -40,7 +37,6 @@ class FruitViewModel (
         getMeasurement()
     }
 
-
     fun getMeasurement() {
         viewModelScope.launch {
             fruitUiState = FruitUiState.Loading
@@ -48,7 +44,8 @@ class FruitViewModel (
                 val measurement = Measurement(
                     esp32Measurement = esp32MeasurementsRepository.getMeasurements(),
                     reganMeasurement = reganMeasurementsRepository.getMeasurements(),
-                    image = esp32CamRepository.getImage()
+                    image = esp32CamRepository.getImage(),
+                    date = LocalDateTime.now()
                 )
                 fruitUiState = FruitUiState.Success(
                     measurement = measurement

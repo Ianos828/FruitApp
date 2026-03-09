@@ -21,4 +21,10 @@ interface MeasurementDao {
 
     @Query("SELECT * from measurements ORDER BY id ASC")
     fun getAllMeasurements(): Flow<List<Measurement>>
+
+    @Query("DELETE FROM measurements")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM sqlite_sequence WHERE name='measurements'")
+    suspend fun resetId()
 }

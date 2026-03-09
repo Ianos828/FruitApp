@@ -32,4 +32,9 @@ interface MeasurementsRepository {
      * Save bitmap to internal storage and return the file path.
      */
     suspend fun saveImageToInternalStorage(bitmap: Bitmap): String?
+
+    /**
+     * Clear all measurements and reset the autoincrement ID.
+     */
+    suspend fun deleteAllMeasurements()
 }

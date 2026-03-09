@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.fruitapp.model.Measurement
 
-@Database(entities = [Measurement::class], version = 2, exportSchema = false)
-//@TypeConverters(Converters::class)
+@Database(entities = [Measurement::class], version = 3, exportSchema = false)
+@TypeConverters(Converters::class)
 abstract class MeasurementDatabase : RoomDatabase() {
     abstract fun measurementDao(): MeasurementDao
 
@@ -21,7 +21,7 @@ abstract class MeasurementDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context,
                     MeasurementDatabase::class.java,
-                    "item_database"
+                    "measurements_database"
                 ).fallbackToDestructiveMigration()
                 .build()
                 .also { Instance = it }

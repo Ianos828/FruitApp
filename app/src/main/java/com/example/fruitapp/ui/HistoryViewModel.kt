@@ -13,11 +13,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel to retrieve all measurements in the Room database.
  */
-class HistoryViewModel(measurementsRepository: MeasurementsRepository): ViewModel() {
+class HistoryViewModel(private val measurementsRepository: MeasurementsRepository): ViewModel() {
     val historyUiState: StateFlow<HistoryUiState> =
         measurementsRepository.getAllMeasurementsStream().map { HistoryUiState(it) }
             .stateIn(
@@ -25,6 +26,19 @@ class HistoryViewModel(measurementsRepository: MeasurementsRepository): ViewMode
                 started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
                 initialValue = HistoryUiState()
             )
+    
+    fun deleteMeasurement(measurement: Measurement) {
+        viewModelScope.launch {
+            measurementsRepository.deleteMeasurement(measurement)
+        }
+    }
+
+    fun deleteAllMeasurements() {
+        viewModelScope.launch {
+            measurementsRepository.deleteAllMeasurements()
+        }
+    }
+
     companion object {
         private const val TIMEOUT_MILLIS = 5_000L
         val Factory: ViewModelProvider.Factory = viewModelFactory {

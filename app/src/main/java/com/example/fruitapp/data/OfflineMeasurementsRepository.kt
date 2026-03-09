@@ -39,4 +39,9 @@ class OfflineMeasurementsRepository(
             null
         }
     }
+
+    override suspend fun deleteAllMeasurements() {
+        measurementDao.deleteAll()
+        measurementDao.resetId()
+    }
 }

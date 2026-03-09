@@ -1,5 +1,6 @@
 package com.example.fruitapp.model
 
+import android.annotation.SuppressLint
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -28,12 +29,13 @@ data class Esp32Measurement(
     /**
      * Returns a string representation of the measurement
      */
+    @SuppressLint("DefaultLocale")
     override fun toString(): String {
-        return String.format("Fluorescence: %s\nNIR 680 Reading: %s\n"
-                + "NIR 705 Reading: %s\nNIR 730 Reading: %s\nNIR 760 Reading: %s\n"
-                + "NIR 810 Reading: %s\nNIR 860 Reading: %s\nNIR 940 Reading: %s\n"
-                + "Lidar Reading: %s\nEthylene Concentration: %s\nAir Quality: %s\n"
-                + "MQ3 Reading: %s\nMQ4 Reading: %s\nMQ5 Reading: %s",
+        return String.format("Fluorescence: %.2f\nNIR 680 Reading: %.2f\n"
+                + "NIR 705 Reading: %.2f\nNIR 730 Reading: %.2f\nNIR 760 Reading: %.2f\n"
+                + "NIR 810 Reading: %.2f\nNIR 860 Reading: %.2f\nNIR 940 Reading: %.2f\n"
+                + "Lidar Reading: %.2f\nEthylene Concentration: %d\nAir Quality: %d\n"
+                + "MQ3 Reading: %d\nMQ4 Reading: %d\nMQ5 Reading: %d",
             fluorescenceReading,
             nir680Reading,
             nir705Reading,
