@@ -15,6 +15,10 @@ import com.example.fruitapp.data.Esp32MeasurementsRepository
 import com.example.fruitapp.data.MeasurementsRepository
 import com.example.fruitapp.data.ReganMeasurementsRepository
 import com.example.fruitapp.model.Measurement
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.io.IOException
@@ -35,6 +39,7 @@ class FruitViewModel (
     init {
         getMeasurement()
     }
+
 
     fun getMeasurement() {
         viewModelScope.launch {

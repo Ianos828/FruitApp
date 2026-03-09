@@ -34,12 +34,15 @@ import com.example.fruitapp.R
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.fruitapp.model.Image
 import com.example.fruitapp.model.Measurement
 import com.example.fruitapp.ui.FruitUiState
+import com.example.fruitapp.ui.HistoryViewModel
 import kotlin.collections.listOf
 
 /**
@@ -47,16 +50,15 @@ import kotlin.collections.listOf
  */
 @Composable
 fun HistoryScreen(
-    fruitUiState: FruitUiState,
-    retryAction: () -> Unit,
-    innerPadding: PaddingValues,
+    viewModel: HistoryViewModel = viewModel(factory = HistoryViewModel.Factory),
     modifier: Modifier = Modifier
 ) {
+    val historyUiState = viewModel.historyUiState.collectAsState()
+
     LazyColumn(
         modifier = modifier,
-        //contentPadding = innerPadding
     ) {
-        items(items = listOf<Measurement>()) { measurement ->
+        items(items = historyUiState.value.measurementList, key = { it.id }) { measurement ->
             MeasurementItem(
                 measurement = measurement,
                 modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))

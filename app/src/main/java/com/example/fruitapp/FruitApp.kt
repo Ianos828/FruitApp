@@ -134,9 +134,6 @@ fun FruitApp(
             }
             composable(route = FruitAppScreen.History.name) {
                 HistoryScreen(
-                    fruitUiState = viewModel.fruitUiState,
-                    innerPadding = innerPadding,
-                    retryAction = { viewModel.getMeasurement() },
                     modifier = Modifier.fillMaxSize()
                 )
             }
