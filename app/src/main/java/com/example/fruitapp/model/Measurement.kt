@@ -10,6 +10,7 @@ data class Measurement(
     @Embedded val esp32Measurement: Esp32Measurement,
     @Embedded val pressureMeasurement: PressureMeasurement,
     @Embedded val image: Image,
+    val prediction: String = "No prediction",
     val date: LocalDateTime = LocalDateTime.now(),
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0

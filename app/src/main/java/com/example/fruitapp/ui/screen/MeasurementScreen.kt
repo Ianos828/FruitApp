@@ -69,8 +69,11 @@ fun MeasurementDetailsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxSize()
         ) {
-            // Updated to pass the image from measurement
             MediumFruitImage(measurement.image)
+            Text(
+                text = measurement.prediction,
+                style = MaterialTheme.typography.displayMedium
+            )
             FruitDetails(measurement)
 
             ButtonColumn(

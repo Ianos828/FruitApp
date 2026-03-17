@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.fruitapp.FruitAppApplication
 import com.example.fruitapp.data.Esp32CamRepository
 import com.example.fruitapp.data.Esp32MeasurementsRepository
+import com.example.fruitapp.data.FruitPredictor
 import com.example.fruitapp.data.MeasurementsRepository
 import com.example.fruitapp.data.PressureMeasurementsRepository
 import com.example.fruitapp.model.Measurement
@@ -29,7 +30,8 @@ class FruitViewModel (
     private val esp32MeasurementsRepository: Esp32MeasurementsRepository,
     private val pressureMeasurementsRepository: PressureMeasurementsRepository,
     private val esp32CamRepository: Esp32CamRepository,
-    private val measurementsRepository: MeasurementsRepository
+    private val measurementsRepository: MeasurementsRepository,
+    private val fruitPredictor: FruitPredictor
 ): ViewModel() {
 
     /**
@@ -59,6 +61,9 @@ class FruitViewModel (
                 val esp32Result = esp32Deferred.await()
                 val pressureResult = pressureDeferred.await()
 
+                // Generate prediction using the ONNX model
+                val prediction = fruitPredictor.predict(esp32Result, pressureResult)
+
                 // Now that measurements are done, fetch the image
                 val imageResult = esp32CamRepository.getImage()
 
@@ -66,6 +71,7 @@ class FruitViewModel (
                     esp32Measurement = esp32Result,
                     pressureMeasurement = pressureResult,
                     image = imageResult,
+                    prediction = prediction,
                     date = LocalDateTime.now()
                 )
                 fruitUiState = FruitUiState.Success(
@@ -108,12 +114,14 @@ class FruitViewModel (
                 val pressureMeasurementsRepository = application.container.pressureMeasurementsRepository
                 val esp32CamRepository = application.container.esp32CamRepository
                 val measurementsRepository = application.container.measurementsRepository
+                val fruitPredictor = application.container.fruitPredictor
 
                 FruitViewModel(
                     esp32MeasurementsRepository = esp32MeasurementsRepository,
                     pressureMeasurementsRepository = pressureMeasurementsRepository,
                     esp32CamRepository = esp32CamRepository,
-                    measurementsRepository = measurementsRepository
+                    measurementsRepository = measurementsRepository,
+                    fruitPredictor = fruitPredictor
                 )
             }
         }

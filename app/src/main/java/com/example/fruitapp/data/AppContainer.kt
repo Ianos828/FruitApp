@@ -17,6 +17,7 @@ interface AppContainer {
     val pressureMeasurementsRepository: PressureMeasurementsRepository
     val esp32CamRepository: Esp32CamRepository
     val measurementsRepository: MeasurementsRepository
+    val fruitPredictor: FruitPredictor
 }
 
 /**
@@ -98,5 +99,9 @@ class DefaultAppContainer(private val context: Context): AppContainer {
             .measurementDao(),
             context
         )
+    }
+
+    override val fruitPredictor: FruitPredictor by lazy {
+        FruitPredictor(context)
     }
 }

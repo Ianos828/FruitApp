@@ -24,7 +24,7 @@ data class Esp32Measurement(
     @SerialName(value = "mq4") val mq4Reading: Int = 0,
     @SerialName(value = "mq5") val mq5Reading: Int = 0
 ) {
-    
+
     /**
      * Returns a string representation of the measurement
      */

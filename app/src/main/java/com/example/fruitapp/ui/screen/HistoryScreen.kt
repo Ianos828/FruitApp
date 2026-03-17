@@ -141,7 +141,7 @@ private fun MeasurementItem(
                 SmallFruitImage(measurement.image)
                 FruitInformation(
                     measurement = measurement,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).padding(start = dimensionResource(R.dimen.padding_small))
                 )
                 
                 FruitDetailsButton(
@@ -212,7 +212,6 @@ private fun SmallFruitImage(
         contentScale = ContentScale.Crop,
         modifier = modifier
             .size(dimensionResource(R.dimen.small_image_size))
-            .padding(dimensionResource(R.dimen.padding_small))
             .clip(MaterialTheme.shapes.small)
     )
 }
@@ -225,9 +224,8 @@ private fun FruitInformation(
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.measurement_desc, measurement.id),
-            style = MaterialTheme.typography.displayMedium,
-            modifier = Modifier.padding(top = dimensionResource(id = R.dimen.padding_small))
+            text = measurement.prediction,
+            style = MaterialTheme.typography.displayMedium
         )
         Text(
             text = measurement.date.format(formatter),
