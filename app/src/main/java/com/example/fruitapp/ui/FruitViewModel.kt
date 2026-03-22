@@ -1,5 +1,6 @@
 package com.example.fruitapp.ui
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,26 +14,29 @@ import com.example.fruitapp.FruitAppApplication
 import com.example.fruitapp.data.Esp32CamRepository
 import com.example.fruitapp.data.Esp32MeasurementsRepository
 import com.example.fruitapp.data.FruitPredictor
+import com.example.fruitapp.data.LidarRepository
 import com.example.fruitapp.data.MeasurementsRepository
 import com.example.fruitapp.data.PressureMeasurementsRepository
+import com.example.fruitapp.model.LidarPoint
+import com.example.fruitapp.model.LidarScan
 import com.example.fruitapp.model.Measurement
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 import java.time.LocalDateTime
 
 /**
  * ViewModel for the Fruit App.
  * Handles fetching live sensor data and saving measurements to history.
  */
-class FruitViewModel (
+class FruitViewModel(
     private val esp32MeasurementsRepository: Esp32MeasurementsRepository,
     private val pressureMeasurementsRepository: PressureMeasurementsRepository,
     private val esp32CamRepository: Esp32CamRepository,
     private val measurementsRepository: MeasurementsRepository,
+    private val lidarRepository: LidarRepository,
     private val fruitPredictor: FruitPredictor
-): ViewModel() {
+) : ViewModel() {
 
     /**
      * The current UI state of the fruit measurement process.
@@ -45,33 +49,27 @@ class FruitViewModel (
     }
 
     /**
-     * Fetches a new measurement from all sensors.
-     * Sensors are queried in parallel where possible, with the camera image
-     * being fetched after the initial sensor data is received.
+     * Fetches a new measurement from all sensors AND starts the Lidar scan.
      */
     fun getMeasurement() {
         viewModelScope.launch {
             fruitUiState = FruitUiState.Loading
+            
             try {
-                // Start the two measurement requests in parallel
                 val esp32Deferred = async { esp32MeasurementsRepository.getMeasurements() }
                 val pressureDeferred = async { pressureMeasurementsRepository.getMeasurements() }
                 val imageDeferred = async { esp32CamRepository.getImage() }
 
-                // Wait for the sensors to finish first
                 val esp32Result = esp32Deferred.await()
                 val pressureResult = pressureDeferred.await()
                 val imageResult = imageDeferred.await()
 
                 var prediction: String = "No Prediction"
 
-                //if all measurements were successfully fetched, predict the ripeness
                 if (!esp32Result.isDefault() && !pressureResult.isDefault()) {
-                    // Generate prediction using the ONNX model
                     prediction = fruitPredictor.predict(esp32Result, pressureResult)
                 }
 
-                // Create the measurement object
                 val measurement = Measurement(
                     esp32Measurement = esp32Result,
                     pressureMeasurement = pressureResult,
@@ -80,26 +78,68 @@ class FruitViewModel (
                     date = LocalDateTime.now()
                 )
                 fruitUiState = FruitUiState.Success(
-                    measurement = measurement
+                    measurement = measurement,
+                    isLidarScanning = true
                 )
-            } catch (e: IOException) {
-                fruitUiState = FruitUiState.Error
-            } catch (e: HttpException) {
+                
+                // Start lidar streaming update
+                startLidarScanInternal()
+                
+            } catch (e: Exception) {
+                Log.e("FruitViewModel", "Error fetching measurements", e)
                 fruitUiState = FruitUiState.Error
             }
         }
     }
 
     /**
-     * Saves the current measurement from the [FruitUiState.Success] state to the history database.
-     * This includes saving the bitmap to internal storage and persisting the file path.
+     * Internal function to handle Lidar streaming logic.
+     */
+    private fun startLidarScanInternal() {
+        viewModelScope.launch {
+            val currentPoints = mutableListOf<LidarPoint>()
+            
+            lidarRepository.getLidarStreaming()
+                .catch { e ->
+                    Log.e("FruitViewModel", "Error in lidar stream", e)
+                    val currentState = fruitUiState
+                    if (currentState is FruitUiState.Success) {
+                        fruitUiState = currentState.copy(isLidarScanning = false, lidarError = true)
+                    }
+                }
+                .collect { newPoint ->
+                    currentPoints.add(newPoint)
+                    val currentState = fruitUiState
+                    if (currentState is FruitUiState.Success) {
+                        val updatedMeasurement = currentState.measurement.copy(
+                            esp32Measurement = currentState.measurement.esp32Measurement.copy(
+                                lidarScan = LidarScan(ArrayList(currentPoints))
+                            )
+                        )
+                        fruitUiState = currentState.copy(
+                            measurement = updatedMeasurement,
+                            isLidarScanning = true // still scanning
+                        )
+                    }
+                }
+            
+            // Flow finished successfully
+            val finalState = fruitUiState
+            if (finalState is FruitUiState.Success) {
+                fruitUiState = finalState.copy(isLidarScanning = false)
+            }
+        }
+    }
+
+    /**
+     * Saves the current measurement to the history database.
      */
     fun saveCurrentMeasurement() {
         viewModelScope.launch {
             val successState = fruitUiState as? FruitUiState.Success ?: return@launch
             val currentMeasurement = successState.measurement
             val bitmap = currentMeasurement.image.bitmap ?: return@launch
-            
+
             val filePath = measurementsRepository.saveImageToInternalStorage(bitmap)
             val measurementToSave = currentMeasurement.copy(
                 image = currentMeasurement.image.copy(filePath = filePath)
@@ -109,24 +149,16 @@ class FruitViewModel (
     }
 
     companion object {
-        /**
-         * Factory to create the [FruitViewModel] with required dependencies.
-         */
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as FruitAppApplication)
-                val esp32MeasurementsRepository = application.container.esp32MeasurementsRepository
-                val pressureMeasurementsRepository = application.container.pressureMeasurementsRepository
-                val esp32CamRepository = application.container.esp32CamRepository
-                val measurementsRepository = application.container.measurementsRepository
-                val fruitPredictor = application.container.fruitPredictor
-
                 FruitViewModel(
-                    esp32MeasurementsRepository = esp32MeasurementsRepository,
-                    pressureMeasurementsRepository = pressureMeasurementsRepository,
-                    esp32CamRepository = esp32CamRepository,
-                    measurementsRepository = measurementsRepository,
-                    fruitPredictor = fruitPredictor
+                    esp32MeasurementsRepository = application.container.esp32MeasurementsRepository,
+                    pressureMeasurementsRepository = application.container.pressureMeasurementsRepository,
+                    esp32CamRepository = application.container.esp32CamRepository,
+                    measurementsRepository = application.container.measurementsRepository,
+                    lidarRepository = application.container.lidarRepository,
+                    fruitPredictor = application.container.fruitPredictor
                 )
             }
         }

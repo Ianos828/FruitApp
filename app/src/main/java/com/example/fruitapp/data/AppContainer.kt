@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.fruitapp.network.Esp32CamApiService
 import retrofit2.Retrofit
 import com.example.fruitapp.network.Esp32MeasurementApiService
+import com.example.fruitapp.network.LidarApiService
 import com.example.fruitapp.network.PressureMeasurementApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -17,6 +18,7 @@ interface AppContainer {
     val pressureMeasurementsRepository: PressureMeasurementsRepository
     val esp32CamRepository: Esp32CamRepository
     val measurementsRepository: MeasurementsRepository
+    val lidarRepository: LidarRepository
     val fruitPredictor: FruitPredictor
 }
 
@@ -67,6 +69,13 @@ class DefaultAppContainer(private val context: Context): AppContainer {
     }
 
     /**
+     * Lazily initialized Lidar API service.
+     */
+    private val lidarRetrofitService: LidarApiService by lazy {
+        esp32Retrofit.create(LidarApiService::class.java)
+    }
+
+    /**
      * Lazily initialized Pressure measurement API service.
      */
     private val pressureRetrofitService: PressureMeasurementApiService by lazy {
@@ -99,6 +108,10 @@ class DefaultAppContainer(private val context: Context): AppContainer {
             .measurementDao(),
             context
         )
+    }
+
+    override val lidarRepository: LidarRepository by lazy {
+        NetworkLidarRepository(lidarRetrofitService)
     }
 
     override val fruitPredictor: FruitPredictor by lazy {
