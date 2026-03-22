@@ -16,8 +16,11 @@ import com.example.fruitapp.data.Esp32MeasurementsRepository
 import com.example.fruitapp.data.FruitPredictor
 import com.example.fruitapp.data.MeasurementsRepository
 import com.example.fruitapp.data.PressureMeasurementsRepository
+import com.example.fruitapp.model.LidarPoint
+import com.example.fruitapp.model.LidarScan
 import com.example.fruitapp.model.Measurement
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
@@ -50,11 +53,14 @@ class FruitViewModel(
     }
 
     /**
-     * Fetches a new measurement from all sensors.
+     * Fetches a new measurement from all sensors AND starts the Lidar scan.
      */
     fun getMeasurement() {
         viewModelScope.launch {
             fruitUiState = FruitUiState.Loading
+            // Automatically start lidar scan when taking a measurement
+            startLidarScanInternal()
+            
             try {
                 val esp32Deferred = async { esp32MeasurementsRepository.getMeasurements() }
                 val pressureDeferred = async { pressureMeasurementsRepository.getMeasurements() }
@@ -86,22 +92,22 @@ class FruitViewModel(
     }
 
     /**
-     * NEW: Triggers a 2D lidar scan by calling the /lidar-scan endpoint.
-     * Updates lidarUiState with the result.
-     * Expect this to take 1-2 minutes while the motor sweeps.
+     * Internal function to handle Lidar streaming logic.
      */
-    fun getLidarScan() {
+    private fun startLidarScanInternal() {
         viewModelScope.launch {
             lidarUiState = LidarUiState.Loading
-            try {
-                Log.d("FruitViewModel", "Triggering Lidar Scan...")
-                val result = esp32MeasurementsRepository.getLidarScan()
-                Log.d("FruitViewModel", "Lidar Scan Result Received: ${result.scan.size} points")
-                lidarUiState = LidarUiState.Success(lidarScan = result)
-            } catch (e: Exception) {
-                Log.e("FruitViewModel", "Error in getLidarScan", e)
-                lidarUiState = LidarUiState.Error
-            }
+            val currentPoints = mutableListOf<LidarPoint>()
+            
+            esp32MeasurementsRepository.getLidarStreaming()
+                .catch { e ->
+                    Log.e("FruitViewModel", "Error in lidar stream", e)
+                    lidarUiState = LidarUiState.Error
+                }
+                .collect { newPoint ->
+                    currentPoints.add(newPoint)
+                    lidarUiState = LidarUiState.Success(LidarScan(ArrayList(currentPoints)))
+                }
         }
     }
 

@@ -129,7 +129,6 @@ fun FruitApp(
                             }
                         }
                     },
-                    onLidarScanButtonClicked = { viewModel.getLidarScan() },
                     retryAction = { viewModel.getMeasurement() },
                     modifier = Modifier.fillMaxSize()
                 )

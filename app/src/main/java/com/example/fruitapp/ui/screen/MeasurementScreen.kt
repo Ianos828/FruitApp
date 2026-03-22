@@ -54,7 +54,6 @@ fun MeasurementScreen(
     lidarUiState: LidarUiState,
     onSaveMeasurementButtonClicked: () -> Unit,
     onDiscardMeasurementButtonClicked: () -> Unit,
-    onLidarScanButtonClicked: () -> Unit,
     retryAction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -65,7 +64,6 @@ fun MeasurementScreen(
             lidarUiState = lidarUiState,
             onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
             onDiscardMeasurementButtonClicked = onDiscardMeasurementButtonClicked,
-            onLidarScanButtonClicked = onLidarScanButtonClicked,
             modifier = modifier.fillMaxWidth()
         )
         is FruitUiState.Error -> ErrorScreen(
@@ -81,7 +79,6 @@ fun MeasurementDetailsScreen(
     lidarUiState: LidarUiState,
     onSaveMeasurementButtonClicked: () -> Unit,
     onDiscardMeasurementButtonClicked: () -> Unit,
-    onLidarScanButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier) {
@@ -104,9 +101,7 @@ fun MeasurementDetailsScreen(
 
             ButtonColumn(
                 onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
-                onDiscardMeasurementButtonClicked = onDiscardMeasurementButtonClicked,
-                onLidarScanButtonClicked = onLidarScanButtonClicked,
-                lidarUiState = lidarUiState
+                onDiscardMeasurementButtonClicked = onDiscardMeasurementButtonClicked
             )
         }
     }
@@ -135,14 +130,14 @@ private fun LidarResultsSection(
                         .size(48.dp)
                 )
                 Text(
-                    text = "Scanning fruit... this may take 1-2 minutes",
+                    text = "Scanning fruit profile...",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(8.dp)
                 )
             }
             is LidarUiState.Error -> {
                 Text(
-                    text = "Scan failed. Please try again.",
+                    text = "Lidar Scan failed.",
                     color = Color.Red,
                     modifier = Modifier.padding(8.dp)
                 )
@@ -161,8 +156,6 @@ private fun LidarResultsSection(
 
 /**
  * Draws the 2D fruit profile graph from lidar scan data
- * X axis = step (horizontal position)
- * Y axis = distance in mm (inverted so fruit surface appears as a bump)
  */
 @Composable
 private fun LidarGraph(
@@ -269,8 +262,6 @@ private fun FruitDetails(
 private fun ButtonColumn(
     onSaveMeasurementButtonClicked: () -> Unit,
     onDiscardMeasurementButtonClicked: () -> Unit,
-    onLidarScanButtonClicked: () -> Unit,
-    lidarUiState: LidarUiState,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -281,10 +272,6 @@ private fun ButtonColumn(
     ) {
         SaveMeasurementButton(onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked)
         DiscardMeasurementButton(onDiscardMeasurementButtonClicked = onDiscardMeasurementButtonClicked)
-        LidarScanButton(
-            onLidarScanButtonClicked = onLidarScanButtonClicked,
-            lidarUiState = lidarUiState
-        )
     }
 }
 
@@ -326,27 +313,6 @@ private fun DiscardMeasurementButton(
     }
 }
 
-/**
- * Lidar Scan button
- */
-@Composable
-private fun LidarScanButton(
-    onLidarScanButtonClicked: () -> Unit,
-    lidarUiState: LidarUiState,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onLidarScanButtonClicked,
-        modifier = Modifier.fillMaxWidth(),
-        enabled = lidarUiState !is LidarUiState.Loading
-    ) {
-        Text(
-            text = if (lidarUiState is LidarUiState.Loading) "Scanning..." else "2D Scan",
-            style = MaterialTheme.typography.labelLarge
-        )
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun MeasurementScreenPreview() {
@@ -365,39 +331,6 @@ fun MeasurementScreenPreview() {
                 lidarUiState = LidarUiState.Idle,
                 onSaveMeasurementButtonClicked = {},
                 onDiscardMeasurementButtonClicked = {},
-                onLidarScanButtonClicked = {},
-                retryAction = {}
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MeasurementScreenLidarSuccessPreview() {
-    val samplePoints = listOf(
-        LidarPoint(0, 100), LidarPoint(10, 95), LidarPoint(20, 80),
-        LidarPoint(30, 70), LidarPoint(40, 65), LidarPoint(50, 60),
-        LidarPoint(60, 65), LidarPoint(70, 75), LidarPoint(80, 90),
-        LidarPoint(90, 105)
-    )
-    
-    FruitAppTheme {
-        Surface {
-            MeasurementScreen(
-                fruitUiState = FruitUiState.Success(
-                    measurement = Measurement(
-                        esp32Measurement = com.example.fruitapp.model.Esp32Measurement(),
-                        pressureMeasurement = com.example.fruitapp.model.PressureMeasurement(),
-                        image = Image(),
-                        prediction = "Banana",
-                        date = LocalDateTime.now()
-                    )
-                ),
-                lidarUiState = LidarUiState.Success(lidarScan = LidarScan(samplePoints)),
-                onSaveMeasurementButtonClicked = {},
-                onDiscardMeasurementButtonClicked = {},
-                onLidarScanButtonClicked = {},
                 retryAction = {}
             )
         }
