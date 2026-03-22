@@ -40,7 +40,7 @@ class FruitPredictor(private val context: Context) {
                 esp32.nir810Reading,
                 esp32.nir860Reading,
                 esp32.nir940Reading,
-                esp32.lidarReading,
+                0.0f, // Placeholder for distance_mm (lidarReading was removed from the model)
                 esp32.ethyleneConcentration.toFloat(),
                 esp32.airQuality.toFloat(),
                 esp32.mq3Reading.toFloat(),
