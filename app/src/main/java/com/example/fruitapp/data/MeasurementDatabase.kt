@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.fruitapp.model.Measurement
 
-@Database(entities = [Measurement::class], version = 4, exportSchema = false)
+@Database(entities = [Measurement::class], version = 5, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class MeasurementDatabase : RoomDatabase() {
     abstract fun measurementDao(): MeasurementDao

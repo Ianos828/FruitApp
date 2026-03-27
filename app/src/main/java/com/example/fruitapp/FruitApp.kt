@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,6 +44,7 @@ import com.example.fruitapp.ui.screen.FruitAppHomeScreen
 import com.example.fruitapp.ui.FruitViewModel
 import com.example.fruitapp.ui.screen.HistoryScreen
 import com.example.fruitapp.ui.screen.MeasurementScreen
+import com.example.fruitapp.ui.screen.SettingsScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -51,7 +53,8 @@ import kotlinx.coroutines.launch
 enum class FruitAppScreen(@StringRes val title: Int) {
     Start(title = R.string.app_name),
     Measurement(title = R.string.measurement),
-    History(title = R.string.history)
+    History(title = R.string.history),
+    Settings(title = R.string.settings)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +80,13 @@ fun FruitApp(
             FruitAppAppBar(
                 currentScreen = currentScreen,
                 canNavigateBack = navController.previousBackStackEntry != null,
-                navigateUp = { navController.navigateUp() },
+                navigateUp = { 
+                    viewModel.stopLidarAndReturnHome()
+                    navController.navigateUp() 
+                },
+                onSettingsButtonClicked = {
+                    navController.navigate(FruitAppScreen.Settings.name)
+                },
                 scrollBehavior = scrollBehavior,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -121,7 +130,8 @@ fun FruitApp(
                         }
                     },
                     onDiscardMeasurementButtonClicked = {
-                        // Just navigate back to Start without saving
+                        // Stop Lidar and navigate back
+                        viewModel.stopLidarAndReturnHome()
                         navController.navigate(FruitAppScreen.Start.name) {
                             popUpTo(FruitAppScreen.Start.name) {
                                 inclusive = true
@@ -137,6 +147,11 @@ fun FruitApp(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+            composable(route = FruitAppScreen.Settings.name) {
+                SettingsScreen(
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -148,6 +163,7 @@ private fun FruitAppAppBar(
     scrollBehavior: TopAppBarScrollBehavior? = null,
     canNavigateBack: Boolean,
     navigateUp: () -> Unit,
+    onSettingsButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     CenterAlignedTopAppBar(
@@ -172,6 +188,16 @@ private fun FruitAppAppBar(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.back_button)
+                    )
+                }
+            }
+        },
+        actions = {
+            if (currentScreen == FruitAppScreen.Start) {
+                IconButton(onClick = onSettingsButtonClicked) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = "Settings"
                     )
                 }
             }

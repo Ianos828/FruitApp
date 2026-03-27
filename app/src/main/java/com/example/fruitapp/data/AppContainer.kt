@@ -9,6 +9,7 @@ import com.example.fruitapp.network.PressureMeasurementApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 
 /**
  * Dependency Injection container at the application level.
@@ -20,6 +21,7 @@ interface AppContainer {
     val measurementsRepository: MeasurementsRepository
     val lidarRepository: LidarRepository
     val fruitPredictor: FruitPredictor
+    val userPreferencesRepository: UserPreferencesRepository
 }
 
 /**
@@ -34,9 +36,18 @@ class DefaultAppContainer(private val context: Context): AppContainer {
         ignoreUnknownKeys = true 
     }
 
-    private val esp32BaseUrl = "http://esp32_combined.local/"
-    private val pressureBaseUrl = "http://force_sensor.local/"
-    private val esp32CamBaseUrl = "http://esp32_cam_image.local/"
+    override val userPreferencesRepository: UserPreferencesRepository by lazy {
+        UserPreferencesRepository(context.dataStore)
+    }
+
+    /**
+     * Shared OkHttpClient for network requests and WebSockets.
+     */
+    private val okHttpClient = OkHttpClient()
+
+    private val esp32BaseUrl = "http://10.197.233.131/"
+    private val pressureBaseUrl = "http://10.197.233.83/"
+    private val esp32CamBaseUrl = "http://10.197.233.186/"
 
     /**
      * Retrofit instance for ESP32 measurement API.
@@ -44,6 +55,7 @@ class DefaultAppContainer(private val context: Context): AppContainer {
     private val esp32Retrofit: Retrofit = Retrofit.Builder()
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .baseUrl(esp32BaseUrl)
+        .client(okHttpClient)
         .build()
 
     /**
@@ -52,13 +64,16 @@ class DefaultAppContainer(private val context: Context): AppContainer {
     private val pressureRetrofit: Retrofit = Retrofit.Builder()
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .baseUrl(pressureBaseUrl)
+        .client(okHttpClient)
         .build()
 
     /**
      * Retrofit instance for ESP32 camera API.
      */
     private val esp32CamRetrofit: Retrofit = Retrofit.Builder()
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .baseUrl(esp32CamBaseUrl)
+        .client(okHttpClient)
         .build()
 
     /**
@@ -111,7 +126,12 @@ class DefaultAppContainer(private val context: Context): AppContainer {
     }
 
     override val lidarRepository: LidarRepository by lazy {
-        NetworkLidarRepository(lidarRetrofitService)
+        NetworkLidarRepository(
+            lidarApiService = lidarRetrofitService,
+            okHttpClient = okHttpClient,
+            json = json,
+            userPreferencesRepository = userPreferencesRepository
+        )
     }
 
     override val fruitPredictor: FruitPredictor by lazy {

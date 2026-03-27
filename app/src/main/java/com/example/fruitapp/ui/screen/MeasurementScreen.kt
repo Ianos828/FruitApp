@@ -2,8 +2,10 @@ package com.example.fruitapp.ui.screen
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -57,7 +59,7 @@ fun MeasurementScreen(
     when (fruitUiState) {
         is FruitUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
         is FruitUiState.Success -> MeasurementDetailsScreen(
-            successState = fruitUiState,
+            measurement = fruitUiState.measurement,
             onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
             onDiscardMeasurementButtonClicked = onDiscardMeasurementButtonClicked,
             modifier = modifier.fillMaxWidth()
@@ -71,33 +73,33 @@ fun MeasurementScreen(
 
 @Composable
 fun MeasurementDetailsScreen(
-    successState: FruitUiState.Success,
+    measurement: Measurement,
     onSaveMeasurementButtonClicked: () -> Unit,
     onDiscardMeasurementButtonClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val measurement = successState.measurement
     Card(modifier = modifier) {
         Column(
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+            
             MediumFruitImage(measurement.image)
+            
             Text(
                 text = measurement.prediction,
-                style = MaterialTheme.typography.displayMedium
+                style = MaterialTheme.typography.displayMedium,
+                textAlign = TextAlign.Center
             )
-            FruitDetails(measurement)
+            
+            FruitDetailsText(measurement)
 
-            // Show result based on state within Success
-            LidarResultsSection(
-                lidarScan = measurement.esp32Measurement.lidarScan,
-                isScanning = successState.isLidarScanning,
-                hasError = successState.lidarError
-            )
+            // Reserved space for graph to prevent text jumping
+            LidarGraphSection(lidarScan = measurement.esp32Measurement.lidarScan)
 
             ButtonColumn(
                 onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
@@ -108,66 +110,41 @@ fun MeasurementDetailsScreen(
 }
 
 /**
- * Section that shows the resulting graph or loading state for Lidar
+ * Section that reserves space for the graph
  */
 @Composable
-private fun LidarResultsSection(
+private fun LidarGraphSection(
     lidarScan: LidarScan,
-    isScanning: Boolean,
-    hasError: Boolean,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(dimensionResource(R.dimen.padding_medium))
+            .height(280.dp) // Fixed height to keep sensor readings stationary
+            .padding(dimensionResource(R.dimen.padding_medium)),
+        contentAlignment = Alignment.Center
     ) {
-        if (isScanning) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .size(48.dp)
-            )
-            Text(
-                text = "Scanning fruit profile...",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(8.dp)
-            )
-        } else if (hasError) {
-            Text(
-                text = "Lidar Scan failed.",
-                color = Color.Red,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
-
         if (lidarScan.scan.isNotEmpty()) {
-            Text(
-                text = "2D Fruit Profile",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-            )
-            LidarGraph(lidarScan = lidarScan)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "2D Fruit Profile",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                LidarGraph(lidarScan = lidarScan)
+            }
         }
     }
 }
 
 /**
  * Draws the 2D fruit profile graph from lidar scan data
- * X axis = step (horizontal position)
- * Y axis = distance in mm (inverted so fruit surface appears as a bump)
  */
 @Composable
 private fun LidarGraph(
     lidarScan: LidarScan,
     modifier: Modifier = Modifier
 ) {
-    if (lidarScan.scan.isEmpty()) {
-        Text("No scan data available")
-        return
-    }
-
     val lineColor = MaterialTheme.colorScheme.primary
 
     Canvas(
@@ -243,16 +220,19 @@ private fun MediumFruitImage(
 }
 
 /**
- * The measurement information displayed on the screen
+ * Displays only the text readings, centered.
  */
 @Composable
-private fun FruitDetails(
+private fun FruitDetailsText(
     measurement: Measurement,
     modifier: Modifier = Modifier
 ) {
     Text(
         text = measurement.toString(),
-        modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))
+        textAlign = TextAlign.Center,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(dimensionResource(R.dimen.padding_medium))
     )
 }
 

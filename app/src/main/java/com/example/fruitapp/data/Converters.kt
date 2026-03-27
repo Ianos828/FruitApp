@@ -1,15 +1,13 @@
 package com.example.fruitapp.data
 
 import androidx.room.TypeConverter
+import com.example.fruitapp.model.LidarPoint
 import com.example.fruitapp.model.LidarScan
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 class Converters {
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    private val json = Json { ignoreUnknownKeys = true }
 
     @TypeConverter
     fun fromTimestamp(value: String?): LocalDateTime? {
@@ -21,13 +19,30 @@ class Converters {
         return date?.format(formatter)
     }
 
+    /**
+     * Converts a comma-separated string of steps and mm values back to a LidarScan object.
+     * Format: "step1,mm1,step2,mm2,..."
+     */
     @TypeConverter
-    fun fromLidarScan(value: String?): LidarScan? {
-        return value?.let { json.decodeFromString<LidarScan>(it) }
+    fun fromLidarScanString(value: String?): LidarScan? {
+        if (value == null || value.isEmpty()) return LidarScan()
+        val parts = value.split(",")
+        val points = mutableListOf<LidarPoint>()
+        for (i in 0 until parts.size - 1 step 2) {
+            val step = parts[i].toIntOrNull() ?: 0
+            val mm = parts[i+1].toIntOrNull() ?: 0
+            points.add(LidarPoint(step, mm))
+        }
+        return LidarScan(points)
     }
 
+    /**
+     * Converts a LidarScan object to a comma-separated string for database storage.
+     * Format: "step1,mm1,step2,mm2,..."
+     */
     @TypeConverter
     fun lidarScanToString(lidarScan: LidarScan?): String? {
-        return lidarScan?.let { json.encodeToString(it) }
+        if (lidarScan == null) return null
+        return lidarScan.scan.joinToString(",") { "${it.step},${it.mm}" }
     }
 }
