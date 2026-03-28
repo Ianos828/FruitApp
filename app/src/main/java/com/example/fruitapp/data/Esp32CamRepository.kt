@@ -9,6 +9,7 @@ import com.example.fruitapp.R
 import com.example.fruitapp.model.Image
 import com.example.fruitapp.network.Esp32CamApiService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.createBitmap
 
@@ -24,15 +25,19 @@ interface Esp32CamRepository {
  */
 class NetworkEsp32CamRepository(
     private val esp32CamApiService: Esp32CamApiService,
+    private val userPreferencesRepository: UserPreferencesRepository,
     private val context: Context
 ) : Esp32CamRepository {
     override suspend fun getImage(): Image = withContext(Dispatchers.IO) {
         try {
-            val responseBody = esp32CamApiService.getImage()
+            val ip = userPreferencesRepository.esp32CamIp.first()
+            val url = "http://$ip/image"
+            val responseBody = esp32CamApiService.getImage(url)
             val bytes = responseBody.bytes()
             val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
             Image(bitmap ?: getPlaceholderBitmap())
         } catch (e: Exception) {
+            e.printStackTrace()
             Image(getPlaceholderBitmap())
         }
     }
