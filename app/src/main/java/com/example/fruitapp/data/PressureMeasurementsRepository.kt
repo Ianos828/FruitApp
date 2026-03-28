@@ -3,6 +3,7 @@ package com.example.fruitapp.data
 import com.example.fruitapp.model.PressureMeasurement
 import com.example.fruitapp.network.PressureMeasurementApiService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 /**
@@ -19,7 +20,8 @@ interface PressureMeasurementsRepository {
  * Network implementation of [PressureMeasurementsRepository].
  */
 class NetworkPressureMeasurementsRepository(
-    private val pressureMeasurementApiService: PressureMeasurementApiService
+    private val pressureMeasurementApiService: PressureMeasurementApiService,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : PressureMeasurementsRepository {
 
     /**
@@ -28,7 +30,9 @@ class NetworkPressureMeasurementsRepository(
      */
     override suspend fun getMeasurements(): PressureMeasurement = withContext(Dispatchers.IO) {
         try {
-            pressureMeasurementApiService.getMeasurements()
+            val ip = userPreferencesRepository.pressureSensorIp.first()
+            val url = "http://$ip/trigger"
+            pressureMeasurementApiService.getMeasurements(url)
         } catch (e: Exception) {
             e.printStackTrace()
             PressureMeasurement()

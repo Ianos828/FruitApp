@@ -1,8 +1,5 @@
 package com.example.fruitapp.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -13,7 +10,7 @@ import com.example.fruitapp.FruitAppApplication
 import com.example.fruitapp.data.UserPreferencesRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -33,11 +30,15 @@ class SettingsViewModel(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
-    val uiState: StateFlow<SettingsUiState> = userPreferencesRepository.esp32Ip.map { esp32Ip ->
+    val uiState: StateFlow<SettingsUiState> = combine(
+        userPreferencesRepository.esp32Ip,
+        userPreferencesRepository.pressureSensorIp,
+        userPreferencesRepository.esp32CamIp
+    ) { esp32Ip, pressureSensorIp, esp32CamIp ->
         SettingsUiState(
             esp32Ip = esp32Ip,
-            pressureSensorIp = "", // Add flows for these if needed
-            esp32CamIp = ""
+            pressureSensorIp = pressureSensorIp,
+            esp32CamIp = esp32CamIp
         )
     }.stateIn(
         scope = viewModelScope,
@@ -48,6 +49,18 @@ class SettingsViewModel(
     fun updateEsp32Ip(ip: String) {
         viewModelScope.launch {
             userPreferencesRepository.saveEsp32Ip(ip)
+        }
+    }
+
+    fun updatePressureSensorIp(ip: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.savePressureSensorIp(ip)
+        }
+    }
+
+    fun updateEsp32CamIp(ip: String) {
+        viewModelScope.launch {
+            userPreferencesRepository.saveEsp32CamIp(ip)
         }
     }
 

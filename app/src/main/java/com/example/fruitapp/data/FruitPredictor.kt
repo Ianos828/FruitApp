@@ -55,8 +55,11 @@ class FruitPredictor(private val context: Context) {
             inputTensor.use {
                 val output = session.run(mapOf(inputName to inputTensor))
                 output.use {
-                    val labels = output[0].value as Array<String>
-                    return labels[0]   // <-- actual prediction
+                    val rawValue = output[0].value
+                    if (rawValue is Array<*> && rawValue.isNotEmpty()) {
+                        return rawValue[0].toString()
+                    }
+                    "Unknown Result"
                 }
             }
         } catch (e: Exception) {
