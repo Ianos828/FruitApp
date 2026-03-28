@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.fruitapp.ui.screen.FruitAppHomeScreen
 import com.example.fruitapp.ui.FruitViewModel
+import com.example.fruitapp.ui.SettingsViewModel
 import com.example.fruitapp.ui.screen.HistoryScreen
 import com.example.fruitapp.ui.screen.MeasurementScreen
 import com.example.fruitapp.ui.screen.SettingsScreen
@@ -67,11 +69,13 @@ fun FruitApp(
         backStackEntry?.destination?.route ?: FruitAppScreen.Start.name
     )
 
-    // Create ViewModel using the Factory
+    // ViewModels
     val viewModel: FruitViewModel = viewModel(factory = FruitViewModel.Factory)
+    val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+    
+    val savedSettings by settingsViewModel.savedSettings.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
@@ -81,8 +85,15 @@ fun FruitApp(
                 currentScreen = currentScreen,
                 canNavigateBack = navController.previousBackStackEntry != null,
                 navigateUp = { 
-                    viewModel.stopLidarAndReturnHome()
-                    navController.navigateUp() 
+                    if (currentScreen == FruitAppScreen.Settings) {
+                        // Custom back logic for Settings: handle unsaved changes or blocking
+                        settingsViewModel.onBackRequested(savedSettings) {
+                            navController.popBackStack(FruitAppScreen.Start.name, inclusive = false)
+                        }
+                    } else {
+                        viewModel.stopLidarAndReturnHome()
+                        navController.navigateUp() 
+                    }
                 },
                 onSettingsButtonClicked = {
                     navController.navigate(FruitAppScreen.Settings.name)
@@ -134,7 +145,7 @@ fun FruitApp(
                         viewModel.stopLidarAndReturnHome()
                         navController.navigate(FruitAppScreen.Start.name) {
                             popUpTo(FruitAppScreen.Start.name) {
-                                inclusive = true
+                                inclusive = false
                             }
                         }
                     },
@@ -149,6 +160,8 @@ fun FruitApp(
             }
             composable(route = FruitAppScreen.Settings.name) {
                 SettingsScreen(
+                    onNavigateBack = { navController.popBackStack(FruitAppScreen.Start.name, inclusive = false) },
+                    viewModel = settingsViewModel,
                     modifier = Modifier.fillMaxSize()
                 )
             }
