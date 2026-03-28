@@ -17,7 +17,7 @@ data class Esp32Measurement(
     @SerialName(value = "nir_810") val nir810Reading: Float = 0.0f,
     @SerialName(value = "nir_860") val nir860Reading: Float = 0.0f,
     @SerialName(value = "nir_940") val nir940Reading: Float = 0.0f,
-    @SerialName(value = "distance_mm") val lidarReading: Float = 0.0f,
+    val lidarScan: LidarScan = LidarScan(),
     @SerialName(value = "ethylene_ppb") val ethyleneConcentration: Int = 0,
     @SerialName(value = "air_quality") val airQuality: Int = 0,
     @SerialName(value = "mq3") val mq3Reading: Int = 0,
@@ -37,7 +37,7 @@ data class Esp32Measurement(
                 this.nir810Reading == 0.0f &&
                 this.nir860Reading == 0.0f &&
                 this.nir940Reading == 0.0f &&
-                this.lidarReading == 0.0f &&
+                this.lidarScan.scan.isEmpty() &&
                 this.ethyleneConcentration == 0 &&
                 this.airQuality == 0 &&
                 this.mq3Reading == 0 &&
@@ -57,7 +57,7 @@ data class Esp32Measurement(
         return String.format("Fluorescence: %.2f\nNIR 680 Reading: %.2f\n"
                 + "NIR 705 Reading: %.2f\nNIR 730 Reading: %.2f\nNIR 760 Reading: %.2f\n"
                 + "NIR 810 Reading: %.2f\nNIR 860 Reading: %.2f\nNIR 940 Reading: %.2f\n"
-                + "Lidar Reading: %.2f\nEthylene Concentration: %d\nAir Quality: %d\n"
+                + "Lidar Scan Points: %d\nEthylene Concentration: %d\nAir Quality: %d\n"
                 + "MQ3 Reading: %d\nMQ4 Reading: %d\nMQ5 Reading: %d",
             fluorescenceReading,
             nir680Reading,
@@ -67,7 +67,7 @@ data class Esp32Measurement(
             nir810Reading,
             nir860Reading,
             nir940Reading,
-            lidarReading,
+            lidarScan.scan.size,
             ethyleneConcentration,
             airQuality,
             mq3Reading,
