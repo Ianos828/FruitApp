@@ -20,10 +20,12 @@ import com.example.fruitapp.data.PressureMeasurementsRepository
 import com.example.fruitapp.model.LidarPoint
 import com.example.fruitapp.model.LidarScan
 import com.example.fruitapp.model.Measurement
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 
 /**
@@ -49,8 +51,6 @@ class FruitViewModel(
      * Job tracking the current lidar collection to allow cancellation.
      */
     private var lidarCollectionJob: Job? = null
-
-    // Removed init { getMeasurement() } to prevent automatic scan on startup.
 
     /**
      * Fetches a new measurement from all sensors AND starts the Lidar scan.
@@ -81,7 +81,10 @@ class FruitViewModel(
                 var prediction: String = "No Prediction"
 
                 if (!esp32Result.isDefault() && !pressureResult.isDefault()) {
-                    prediction = fruitPredictor.predict(esp32Result, pressureResult)
+                    // Move ML prediction to a background thread to avoid blocking the UI
+                    prediction = withContext(Dispatchers.Default) {
+                        fruitPredictor.predict(esp32Result, pressureResult)
+                    }
                 }
 
                 val measurement = Measurement(
@@ -163,16 +166,19 @@ class FruitViewModel(
             val bitmap = currentMeasurement.image.bitmap
 
             try {
-                val filePath = if (bitmap != null) {
-                    measurementsRepository.saveImageToInternalStorage(bitmap)
-                } else {
-                    currentMeasurement.image.filePath
-                }
+                // Perform I/O operations on the IO dispatcher
+                withContext(Dispatchers.IO) {
+                    val filePath = if (bitmap != null) {
+                        measurementsRepository.saveImageToInternalStorage(bitmap)
+                    } else {
+                        currentMeasurement.image.filePath
+                    }
 
-                val measurementToSave = currentMeasurement.copy(
-                    image = currentMeasurement.image.copy(filePath = filePath)
-                )
-                measurementsRepository.insertMeasurement(measurementToSave)
+                    val measurementToSave = currentMeasurement.copy(
+                        image = currentMeasurement.image.copy(filePath = filePath)
+                    )
+                    measurementsRepository.insertMeasurement(measurementToSave)
+                }
             } catch (e: Exception) {
                 Log.e("FruitViewModel", "Error saving measurement", e)
             }
