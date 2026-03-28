@@ -98,8 +98,10 @@ fun MeasurementDetailsScreen(
             
             FruitDetailsText(measurement)
 
-            // Reserved space for graph to prevent text jumping
-            LidarGraphSection(lidarScan = measurement.esp32Measurement.lidarScan)
+            if (measurement.esp32Measurement.lidarScan.scan.isNotEmpty()) {
+                // Reserved space for graph to prevent text jumping
+                LidarGraphSection(lidarScan = measurement.esp32Measurement.lidarScan)
+            }
 
             ButtonColumn(
                 onSaveMeasurementButtonClicked = onSaveMeasurementButtonClicked,
@@ -124,15 +126,13 @@ private fun LidarGraphSection(
             .padding(dimensionResource(R.dimen.padding_medium)),
         contentAlignment = Alignment.Center
     ) {
-        if (lidarScan.scan.isNotEmpty()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "2D Fruit Profile",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                LidarGraph(lidarScan = lidarScan)
-            }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "2D Fruit Profile",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            LidarGraph(lidarScan = lidarScan)
         }
     }
 }
