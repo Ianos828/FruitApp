@@ -24,7 +24,7 @@ class FruitPredictor(private val context: Context) {
 
     /**
      * Performs a prediction based on sensor data.
-     * Arguments order: ["fluorescence", "nir_680", "nir_705", "nir_730", "nir_760", "nir_810", "nir_860", "nir_940", "distance_mm", "ethylene_ppb", "air_quality", "mq3", "mq4", "mq5", "forceSensorReading"]
+     * Arguments order: ["fluorescence", "nir_680", "nir_705", "nir_730", "nir_760", "nir_810", "nir_860", "nir_940", "ethylene_ppb", "air_quality", "mq3", "mq4", "mq5", "forceSensorReading"]
      */
     fun predict(esp32: Esp32Measurement, pressure: PressureMeasurement): String {
         return try {
@@ -48,8 +48,8 @@ class FruitPredictor(private val context: Context) {
                 pressure.forceSensorReading
             )
 
-            // Create input tensor
-            val inputTensor = OnnxTensor.createTensor(env, FloatBuffer.wrap(inputData), longArrayOf(1, 15))
+            // Create input tensor with size 14
+            val inputTensor = OnnxTensor.createTensor(env, FloatBuffer.wrap(inputData), longArrayOf(1, 14))
             
             inputTensor.use {
                 val output = session.run(mapOf(inputName to inputTensor))
